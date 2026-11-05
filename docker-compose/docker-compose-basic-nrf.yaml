@@ -3,9 +3,10 @@
 services:
     mysql:
         container_name: "mysql"
-        image: mysql:9.6.0
+        restart: unless-stopped
+        image: mysql:9.6.0@sha256:c5df04bee1a42b74a5841c6409e669cf62126cd0416f00c1cea8ab933b9361b9
         volumes:
-            - ./database/oai_db2.sql:/docker-entrypoint-initdb.d/oai_db.sql
+            - ./database/oai_db-basic.sql:/docker-entrypoint-initdb.d/oai_db.sql
             - ./healthscripts/mysql-healthcheck2.sh:/tmp/mysql-healthcheck.sh
         environment:
             - TZ=Europe/Paris
@@ -20,11 +21,11 @@ services:
             retries: 30
         networks:
             public_net:
-# For CI purposes, we are keeping the line commented
-#                ipv4_address: 192.168.70.131
+                ipv4_address: 192.168.70.131
     oai-udr:
         container_name: "oai-udr"
-        image: oaisoftwarealliance/oai-udr:develop
+        restart: unless-stopped
+        image: oaisoftwarealliance/oai-udr:develop@sha256:d7f718316769dd5fe046dec368ffd20a70d17fc7b366d86cdf72a9cef812ac9f
         expose:
             - 80/tcp
             - 8080/tcp
@@ -37,11 +38,11 @@ services:
             - oai-nrf
         networks:
             public_net:
-# For CI purposes, we are keeping the line commented
-#                ipv4_address: 192.168.70.136
+                ipv4_address: 192.168.70.136
     oai-udm:
         container_name: "oai-udm"
-        image: oaisoftwarealliance/oai-udm:develop
+        restart: unless-stopped
+        image: oaisoftwarealliance/oai-udm:develop@sha256:70b925a25c78059ab2826717954fcfd61271b87e944c713e0075095cd0639520
         expose:
             - 80/tcp
             - 8080/tcp
@@ -53,11 +54,11 @@ services:
             - oai-nrf
         networks:
             public_net:
-# For CI purposes, we are keeping the line commented
-#                ipv4_address: 192.168.70.137
+                ipv4_address: 192.168.70.137
     oai-ausf:
         container_name: "oai-ausf"
-        image: oaisoftwarealliance/oai-ausf:develop
+        restart: unless-stopped
+        image: oaisoftwarealliance/oai-ausf:develop@sha256:9ba53d3e2e55cb6951e7d41bf04dcc04e6835b07507499fc0112ca05d603999e
         expose:
             - 80/tcp
             - 8080/tcp
@@ -69,11 +70,11 @@ services:
             - oai-nrf
         networks:
             public_net:
-# For CI purposes, we are keeping the line commented
-#                ipv4_address: 192.168.70.138
+                ipv4_address: 192.168.70.138
     oai-nrf:
         container_name: "oai-nrf"
-        image: oaisoftwarealliance/oai-nrf:develop
+        restart: unless-stopped
+        image: oaisoftwarealliance/oai-nrf:develop@sha256:0f7997f75b8b6e61e76e01954f0ad5edc33069eda3afa246a837f210589e9c9b
         expose:
             - 80/tcp
             - 8080/tcp
@@ -83,11 +84,11 @@ services:
             - TZ=Europe/Paris
         networks:
             public_net:
-# For CI purposes, we are keeping the line commented
-#                ipv4_address: 192.168.70.130
+                ipv4_address: 192.168.70.130
     oai-amf:
         container_name: "oai-amf"
-        image: oaisoftwarealliance/oai-amf:develop
+        restart: unless-stopped
+        image: oaisoftwarealliance/oai-amf:develop@sha256:f6164ae67bc5f1803abd49bb640ecce298f4c9beb9059b79cf1806010b70ac67
         expose:
             - 80/tcp
             - 8080/tcp
@@ -97,14 +98,16 @@ services:
         environment:
             - TZ=Europe/Paris
         depends_on:
+            - mysql
             - oai-nrf
+            - oai-ausf
         networks:
             public_net:
-# For CI purposes, we are keeping the line commented
-#                ipv4_address: 192.168.70.132
+                ipv4_address: 192.168.70.132
     oai-smf:
         container_name: "oai-smf"
-        image: oaisoftwarealliance/oai-smf:develop
+        restart: unless-stopped
+        image: oaisoftwarealliance/oai-smf:develop@sha256:5dbaa0635f1bde25cfd552b7a9bebcd929585c05ff1a124d83352d93de0a785e
         expose:
             - 80/tcp
             - 8080/tcp
@@ -117,11 +120,11 @@ services:
             - oai-nrf
         networks:
             public_net:
-# For CI purposes, we are keeping the line commented
-#                ipv4_address: 192.168.70.133
+                ipv4_address: 192.168.70.133
     oai-upf:
         container_name: "oai-upf"
-        image: oaisoftwarealliance/oai-upf:develop
+        restart: unless-stopped
+        image: oaisoftwarealliance/oai-upf:develop@sha256:a189ede65a091ee0a79fd9f435a86cb9840e0608fb901c9a1706b57af365ec76
         expose:
             - 2152/udp
             - 8805/udp
@@ -139,13 +142,13 @@ services:
         privileged: true
         networks:
             public_net:
-# For CI purposes, we are keeping the line commented
-#                ipv4_address: 192.168.70.134
+                ipv4_address: 192.168.70.134
     oai-ext-dn:
         privileged: true
         init: true
         container_name: oai-ext-dn
-        image: oaisoftwarealliance/trf-gen-cn5g:latest
+        restart: unless-stopped
+        image: oaisoftwarealliance/trf-gen-cn5g:latest@sha256:3f9ab2e401d2a010b568e78db087b5d1526b8756f1056087939116f6138340a6
         environment:
             - UPF_FQDN=oai-upf
             - UE_NETWORK=12.1.1.0/24
@@ -157,8 +160,7 @@ services:
             retries: 5
         networks:
             public_net:
-# For CI purposes, we are keeping the line commented
-#                ipv4_address: 192.168.70.135
+                ipv4_address: 192.168.70.135
 
 networks:
     public_net:

@@ -98,14 +98,9 @@ database:
 ## general single_nssai configuration
 ## Defines YAML anchors, which are reused in the config file
 snssais:
-  - &embb_slice1
-    sst: 1
-  - &embb_slice2
+  - &native_slice
     sst: 1
     sd: 000001 # in hex
-  - &custom_slice
-    sst: 222
-    sd: 00007B # in hex
 
 ############## NF-specific configuration
 amf:
@@ -121,24 +116,17 @@ amf:
   statistics_timer_interval: 20  # in seconds
   emergency_support: false
   served_guami_list:
-    - mcc: 208
-      mnc: 95
-      amf_region_id: 01
-      amf_set_id: 001
-      amf_pointer: 01
     - mcc: 001
       mnc: 01
       amf_region_id: 01
       amf_set_id: 001
       amf_pointer: 01
   plmn_support_list:
-    - mcc: 208
-      mnc: 95
-      tac: 0xa000
+    - mcc: 001
+      mnc: 01
+      tac: 1
       nssai:
-        - *embb_slice1
-        - *embb_slice2
-        - *custom_slice
+        - *native_slice
   supported_integrity_algorithms:
     - "NIA0"
     - "NIA1"
@@ -151,7 +139,7 @@ amf:
 smf:
   ue_mtu: 1500
   support_features:
-    use_local_subscription_info: yes # Use infos from local_subscription_info or from UDM
+    use_local_subscription_info: no # Use infos from local_subscription_info or from UDM
     use_local_pcc_rules: yes # Use infos from local_pcc_rules or from PCF
   # we resolve from NRF, this is just to configure usage_reporting
   upfs:
@@ -159,10 +147,8 @@ smf:
       config:
         enable_usage_reporting: no
   ue_dns:
-    primary_ipv4: "172.21.3.100"
-    primary_ipv6: "2001:4860:4860::8888"
-    secondary_ipv4: "8.8.8.8"
-    secondary_ipv6: "2001:4860:4860::8888"
+    primary_ipv4: "8.8.8.8"
+    secondary_ipv4: "8.8.4.4"
   ims:
     pcscf_ipv4: "127.0.0.1"
     pcscf_ipv6: "fe80::7915:f408:1787:db8b"
@@ -170,65 +156,34 @@ smf:
   # follows the SmfInfo datatype from 3GPP TS 29.510
   smf_info:
     sNssaiSmfInfoList:
-      - sNssai: *embb_slice1
-        dnnSmfInfoList:
-          - dnn: "oai"
-      - sNssai: *embb_slice2
-        dnnSmfInfoList:
-          - dnn: "oai.ipv4"
-      - sNssai: *custom_slice
+      - sNssai: *native_slice
         dnnSmfInfoList:
           - dnn: "default"
   local_subscription_infos:
-    - single_nssai: *embb_slice1
-      dnn: "oai"
-      qos_profile:
-        5qi: 9
-        session_ambr_ul: "200Mbps"
-        session_ambr_dl: "400Mbps"
-    - single_nssai: *embb_slice2
-      dnn: "oai.ipv4"
-      qos_profile:
-        5qi: 9
-        session_ambr_ul: "100Mbps"
-        session_ambr_dl: "200Mbps"
-    - single_nssai: *custom_slice
+    - single_nssai: *native_slice
       dnn: "default"
       qos_profile:
         5qi: 9
-        session_ambr_ul: "50Mbps"
-        session_ambr_dl: "100Mbps"
+        session_ambr_ul: "1000Mbps"
+        session_ambr_dl: "1000Mbps"
 
 upf:
   support_features:
     enable_bpf_datapath: no    # If "on": BPF is used as datapath else simpleswitch is used, DEFAULT= off
-    enable_snat: yes           # If "on": Source natting is done for UE, DEFAULT= off
+    # off: UEs keep their 12.1.1.x address on N6, so a SIP server can tell them apart
+    # and route UE-to-UE RTP; set yes to give UEs internet access through the UPF
+    enable_snat: no
   remote_n6_gw: localhost      # Dummy host since simple-switch does not use N6 GW
   smfs:
     - host: oai-smf            # To be used for PFCP association in case of no-NRF
   upf_info:
     sNssaiUpfInfoList:
-      - sNssai: *embb_slice1
-        dnnUpfInfoList:
-          - dnn: "oai"
-      - sNssai: *embb_slice2
-        dnnUpfInfoList:
-          - dnn: "oai.ipv4"
-      - sNssai: *custom_slice
+      - sNssai: *native_slice
         dnnUpfInfoList:
           - dnn: "default"
 
 ## DNN configuration
 dnns:
-  - dnn: "oai"
-    pdu_session_type: "IPV4"
-    ipv4_subnet: "12.1.1.128/25"
-  - dnn: "oai.ipv4"
-    pdu_session_type: "IPV4"
-    ipv4_subnet: "12.1.1.64/26"
   - dnn: "default"
     pdu_session_type: "IPV4"
-    ipv4_subnet: "12.1.1.0/26"
-  - dnn: "ims"
-    pdu_session_type: "IPV4V6"
-    ipv4_subnet: "14.1.1.2/24"
+    ipv4_subnet: "12.1.1.0/24"
